@@ -1,0 +1,11 @@
+﻿// Ts con CATPRO
+let
+    Origen = Excel.CurrentWorkbook(){[Name="HAC_Afiliados"]}[Content],
+    #"Tipo cambiado" = Table.TransformColumnTypes(Origen,{{"NAF", type text}, {"AFILIADO", type text}, {"Grupo|CatPro", type text}, {"Número Identificativo", type text}}),
+    #"Filtered Rows" = Table.SelectRows(#"Tipo cambiado", each [#"Grupo|CatPro"] <> null and [#"Grupo|CatPro"] <> ""),
+    #"Consultas combinadas" = Table.NestedJoin(#"Filtered Rows",{"Grupo|CatPro"},Niveles,{"Grupo|CatPro"},"Niveles",JoinKind.Inner),
+    #"Se expandió Niveles" = Table.ExpandTableColumn(#"Consultas combinadas", "Niveles", {"Cat Pro", "Grupo"}, {"Cat Pro", "Grupo"}),
+    #"Filas filtradas" = Table.SelectRows(#"Se expandió Niveles", each [#"Grupo|CatPro"] <> null and [#"Grupo|CatPro"] <> ""),
+    #"Texto en mayúsculas" = Table.TransformColumns(#"Filas filtradas",{{"Grupo|CatPro", Text.Upper, type text}})
+in
+    #"Texto en mayúsculas"

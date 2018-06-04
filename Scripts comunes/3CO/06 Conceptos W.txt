@@ -1,0 +1,10 @@
+﻿let
+    Source = #"CCs 02",
+    #"Removed Other Columns" = Table.SelectColumns(Source,{"Atributo"}),
+    #"Removed Duplicates" = Table.Distinct(#"Removed Other Columns"),
+    #"Filtered Rows" = Table.SelectRows(#"Removed Duplicates", each [Atributo] <> null and [Atributo] <> ""),
+    #"Added Index" = Table.AddIndexColumn(#"Filtered Rows", "Índice", 0, 1),
+    #"Renamed Columns" = Table.RenameColumns(#"Added Index",{{"Atributo", "ITEMs"}, {"Índice", "Index"}}),
+    #"Columnas reordenadas" = Table.ReorderColumns(#"Renamed Columns",{"Index", "ITEMs"})
+in
+    #"Columnas reordenadas"

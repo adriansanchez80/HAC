@@ -1,0 +1,9 @@
+﻿let
+    Origen = #"CCs 02",
+    #"Otras columnas quitadas" = Table.SelectColumns(Origen,{"Sector", "Ámbito", "Subámbito", "Combinada", "Cat Pro", "Grupo", "Grupo|CatPro"}),
+    #"Columna combinada insertada1" = Table.AddColumn(#"Otras columnas quitadas", "Combinada2", each Text.Combine({[Combinada], [#"Grupo|CatPro"]}, "|"), type text),
+    #"Duplicados quitados" = Table.Distinct(#"Columna combinada insertada1", {"Combinada2"}),
+    #"Índice agregado" = Table.AddIndexColumn(#"Duplicados quitados", "Index", 0, 1),
+    #"Filas filtradas" = Table.SelectRows(#"Índice agregado", each [Combinada2] <> null and [Combinada2] <> "")
+in
+    #"Filas filtradas"

@@ -1,0 +1,19 @@
+﻿// 05_Origen_HAC
+let
+
+Origen = Folder.Files(#"Paths"{1}[Ubicación]),
+#"Personalizada agregada4" = Table.AddColumn(Origen, "Custom", each Excel.Workbook([Content])),
+#"Se expandió Custom" = Table.ExpandTableColumn(#"Personalizada agregada4", "Custom", {"Data", "Item", "Kind"}, {"Data", "Item", "Kind"}),
+#"Filas filtradas2" = Table.SelectRows(#"Se expandió Custom", each ([Kind] = "Sheet") and ([Item] = "Sheet0") and ([Extension] = ".xlsx")),
+#"Se expandió Data" = Table.ExpandTableColumn(#"Filas filtradas2", "Data", {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}, {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}),
+#"Filas superiores quitadas" = Table.Skip(#"Se expandió Data",3),
+#"Otras columnas quitadas" = Table.SelectColumns(#"Filas superiores quitadas",{"Column1", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9"}),
+#"Columnas reordenadas" = Table.ReorderColumns(#"Otras columnas quitadas",{"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16"}),
+#"Encabezados promovidos" = Table.PromoteHeaders(#"Columnas reordenadas"),
+#"Tipo cambiado con configuración regional" = Table.TransformColumnTypes(#"Encabezados promovidos", {{"C_COM", type number}, {"AT EP", type number}, {"HEFM", type number}, {"HER", type number}}, "en-US"),
+    #"Tipo cambiado" = Table.TransformColumnTypes(#"Tipo cambiado con configuración regional",{{"NAF", type text}, {"Número Identificativo", type text}, {"Trabajador", type text}, {"CCC", type text}, {"CTO", type text}, {"CTP", type text}, {"GR", type text}, {"EPI / CNAE", type text}, {"Ocupación", type text}, {"Periodo", type date}, {"Desde / Hasta", type text}, {"Total Días", Int64.Type}}),
+#"Columnas con nombre cambiado" = Table.RenameColumns(#"Tipo cambiado",{{"Trabajador", "AFILIADO"}}),
+    #"Filas filtradas1" = Table.SelectRows(#"Columnas con nombre cambiado", each [NAF] <> null and [NAF] <> "")
+
+in
+#"Filas filtradas1"

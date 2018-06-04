@@ -1,0 +1,23 @@
+﻿// 08_HAC
+let
+Origen = #"05_Origen_HAC",
+#"Dividir columna por posición" = Table.SplitColumn(Origen,"Desde / Hasta",Splitter.SplitTextByPositions({0, 2}, false),{"Desde / Hasta.1", "Desde / Hasta.2"}),
+#"Tipo cambiado1" = Table.TransformColumnTypes(#"Dividir columna por posición",{{"Desde / Hasta.1", Int64.Type}, {"Desde / Hasta.2", Int64.Type}, {"CTP", Int64.Type}, {"GR", type text}, {"EPI / CNAE", type text}, {"Ocupación", type text}}),
+    #"Columnas quitadas" = Table.RemoveColumns(#"Tipo cambiado1",{"CCC"}),
+#"Año insertado" = Table.AddColumn(#"Columnas quitadas", "Year", each Date.Year([Periodo]), type number),
+    #"Mes insertado" = Table.AddColumn(#"Año insertado", "Month", each Date.Month([Periodo]), type number),
+#"Días insertados en mes" = Table.AddColumn(#"Mes insertado", "DaysInMonth", each Date.DaysInMonth([Periodo]), type number),
+#"Resta insertada" = Table.AddColumn(#"Días insertados en mes", "Subtract", each [#"Desde / Hasta.2"] - [#"Desde / Hasta.1"], Int64.Type),
+#"Adición insertada" = Table.AddColumn(#"Resta insertada", "Adición insertada", each List.Sum({[Subtract], 1}), Int64.Type),
+#"Columnas quitadas1" = Table.RemoveColumns(#"Adición insertada",{"Adición insertada"}),
+#"Personalizada agregada" = Table.AddColumn(#"Columnas quitadas1", "Días de Tjo", each if [#"Desde / Hasta.1"]=null then null else ([Subtract]+1)),
+#"Columnas quitadas2" = Table.RemoveColumns(#"Personalizada agregada",{"Subtract"}),
+#"Personalizada agregada1" = Table.AddColumn(#"Columnas quitadas2", "Días de Tbjo%CTP", each if[CTP]=null then[Días de Tjo] else ([Días de Tjo]*[CTP]/1000)),
+    #"Personalizada agregada2" = Table.AddColumn(#"Personalizada agregada1", "BC mens/adj", each Date.DaysInMonth([Periodo])*([C_COM]/[#"Días de Tbjo%CTP"])),
+    #"Columna duplicada" = Table.DuplicateColumn(#"Personalizada agregada2", "GR", "GR nº"),
+#"Tipo cambiado2" = Table.TransformColumnTypes(#"Columna duplicada",{{"Días de Tbjo%CTP", type number}, {"Días de Tjo", Int64.Type}, {"BC mens/adj", type number}, {"GR nº", Int64.Type}}),
+    #"Columnas quitadas3" = Table.RemoveColumns(#"Tipo cambiado2",{"DaysInMonth"}),
+    Redondeado = Table.TransformColumns(#"Columnas quitadas3",{{"BC mens/adj", each Number.Round(_, 4), type number}}),
+    #"Filas filtradas" = Table.SelectRows(Redondeado, each [NAF] <> null and [NAF] <> "")
+in
+    #"Filas filtradas"

@@ -1,0 +1,20 @@
+﻿// CCs 00
+let
+    Origen = Folder.Files(#"Paths"{4}[Ubicación]),
+    #"Personalizada agregada" = Table.AddColumn(Origen, "Personalizado", each Excel.Workbook([Content])),
+    #"Se expandió Personalizado" = Table.ExpandTableColumn(#"Personalizada agregada", "Personalizado", {"Name", "Data", "Item", "Kind"}, {"Name.1", "Data", "Item", "Kind"}),
+    #"Columna duplicada1" = Table.DuplicateColumn(#"Se expandió Personalizado", "Name", "Name - Copia"),
+    #"Dividir columna por delimitador" = Table.SplitColumn(#"Columna duplicada1", "Name", Splitter.SplitTextByEachDelimiter({"."}, QuoteStyle.Csv, true), {"Convenio", "Name.2"}),
+    #"Columna duplicada" = Table.DuplicateColumn(#"Dividir columna por delimitador", "Folder Path", "Folder Path - Copia"),
+    #"Dividir columna por delimitador4" = Table.SplitColumn(#"Columna duplicada", "Folder Path", Splitter.SplitTextByEachDelimiter({"\"}, QuoteStyle.Csv, false), {"Folder Path.1", "Folder Path.2"}),
+    #"Dividir columna por delimitador5" = Table.SplitColumn(#"Dividir columna por delimitador4", "Folder Path.2", Splitter.SplitTextByEachDelimiter({"\"}, QuoteStyle.Csv, false), {"Folder Path.2.1", "Folder Path.2.2"}),
+    #"Dividir columna por delimitador6" = Table.SplitColumn(#"Dividir columna por delimitador5", "Folder Path.2.2", Splitter.SplitTextByEachDelimiter({"\"}, QuoteStyle.Csv, false), {"Folder Path.2.2.1", "Folder Path.2.2.2"}),
+    #"Dividir columna por delimitador7" = Table.SplitColumn(#"Dividir columna por delimitador6", "Folder Path.2.2.2", Splitter.SplitTextByEachDelimiter({"\"}, QuoteStyle.Csv, false), {"Folder Path.2.2.2.1", "Folder Path.2.2.2.2"}),
+    #"Columnas con nombre cambiado1" = Table.RenameColumns(#"Dividir columna por delimitador7",{{"Folder Path.2.2.2.1", "Folder Path.1.2"}, {"Folder Path.2.2.1", "Folder Path.1.1.2"}}),
+    #"Valor reemplazado" = Table.ReplaceValue(#"Columnas con nombre cambiado1","\","",Replacer.ReplaceText,{"Folder Path.2.2.2.2"}),
+    #"Texto recortado" = Table.TransformColumns(#"Valor reemplazado",{{"Folder Path.1.1.2", Text.Trim, type text}, {"Folder Path.1.2", Text.Trim, type text}, {"Convenio", Text.Trim, type text},{"Folder Path.2.2.2.2", Text.Trim, type text}}),
+    #"Texto limpio1" = Table.TransformColumns(#"Texto recortado",{{"Folder Path.1.1.2", Text.Clean, type text}, {"Folder Path.1.2", Text.Clean, type text}, {"Convenio", Text.Clean, type text},{"Folder Path.2.2.2.2", Text.Clean, type text}}),
+    #"Poner En Mayúsculas Cada Palabra1" = Table.TransformColumns(#"Texto limpio1",{{"Folder Path.1.2", Text.Proper, type text}, {"Convenio", Text.Proper, type text},{"Folder Path.2.2.2.2", Text.Proper, type text}}),
+    #"Columna combinada insertada" = Table.AddColumn(#"Poner En Mayúsculas Cada Palabra1", "Combinada", each Text.Combine({[Folder Path.1.1.2], [Folder Path.1.2], [Folder Path.2.2.2.2],[Convenio]}, "|"), type text)
+
+in #"Columna combinada insertada"
