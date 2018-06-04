@@ -1,0 +1,52 @@
+﻿// 09_AL
+let
+
+Origen = Folder.Files(#"Paths"{3}[Ubicación]),
+    #"Personalizada agregada4" = Table.AddColumn(Origen, "Custom", each Excel.Workbook([Content])),
+#"Se expandió Custom" = Table.ExpandTableColumn(#"Personalizada agregada4", "Custom", {"Data", "Item", "Kind"}, {"Data", "Item", "Kind"}),
+    #"Filas filtradas2" = Table.SelectRows(#"Se expandió Custom", each ([Kind] = "Sheet") and ([Item] = "Sheet0") and ([Extension] = ".xlsx")),
+#"Se expandió Data" = Table.ExpandTableColumn(#"Filas filtradas2", "Data", {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}, {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}),
+#"Filas superiores quitadas" = Table.Skip(#"Se expandió Data",3),
+#"Otras columnas quitadas" = Table.SelectColumns(#"Filas superiores quitadas",{"Column1", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9"}),
+#"Columnas reordenadas" = Table.ReorderColumns(#"Otras columnas quitadas",{"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16"}),
+#"Encabezados promovidos" = Table.PromoteHeaders(#"Columnas reordenadas"),
+    #"Tipo cambiado con configuración regional" = Table.TransformColumnTypes(#"Encabezados promovidos", {{"C_COM", type number}, {"AT EP", type number}, {"HEFM", type number}, {"HER", type number}}, "en-US"),
+#"Tipo cambiado" = Table.TransformColumnTypes(#"Tipo cambiado con configuración regional",{{"NAF", type text}, {"Número Identificativo", type text}, {"Trabajador", type text}, {"CTO", type text}, {"CTP", type text}, {"GR", type text}, {"EPI / CNAE", type text}, {"Ocupación", type text}, {"Periodo", type date}, {"Total Días", Int64.Type}, {"Días desde", Int64.Type}, {"Días hasta", Int64.Type}}),
+#"Filas filtradas" = Table.SelectRows(#"Tipo cambiado", each ([NAF] <> null)),
+    #"Consultas combinadas" = Table.NestedJoin(#"Filas filtradas",{"NAF"},AFILIACION,{"NAF"},"NewColumn",JoinKind.LeftOuter),
+    #"Se expandió NewColumn" = Table.ExpandTableColumn(#"Consultas combinadas", "NewColumn", {"GR"}, {"GR.1"}),
+    #"Filas ordenadas1" = Table.Sort(#"Se expandió NewColumn",{{"Trabajador", Order.Ascending}}),
+    #"Valor reemplazado" = Table.ReplaceValue(#"Filas ordenadas1","",null,Replacer.ReplaceValue,{"GR"}),
+    #"Personalizada agregada" = Table.AddColumn(#"Valor reemplazado", "Custom", each if [GR]<>null then [GR] else [GR.1]),
+    #"Columnas quitadas" = Table.RemoveColumns(#"Personalizada agregada",{"GR", "GR.1"}),
+    #"Columnas reordenadas1" = Table.ReorderColumns(#"Columnas quitadas",{"NAF", "Número Identificativo", "Trabajador", "CTO", "CTP", "Custom", "EPI / CNAE", "Ocupación", "Periodo", "Días desde", "Días hasta", "Total Días", "C_COM", "AT EP", "HEFM", "HER"}),
+    #"Columnas con nombre cambiado" = Table.RenameColumns(#"Columnas reordenadas1",{{"Custom", "GR"}}),
+    #"Tipo cambiado1" = Table.TransformColumnTypes(#"Columnas con nombre cambiado",{{"GR", type text},{"CTP", Int64.Type}}),
+
+    #"Filas ordenadas" = Table.Sort(#"Tipo cambiado1",{{"NAF", Order.Ascending}, {"Periodo", Order.Ascending}, {"Días desde", Order.Ascending}, {"Días hasta", Order.Ascending}}),
+    #"Índice agregado" = Table.AddIndexColumn(#"Filas ordenadas", "Índice", 0, 1),
+    #"Personalizada agregada2" = Table.AddColumn(#"Índice agregado", "Índice02", each [Índice]+1),
+    #"Consultas combinadas2" = Table.NestedJoin(#"Personalizada agregada2",{"Índice"},#"Personalizada agregada2",{"Índice02"},"NewColumn",JoinKind.LeftOuter),
+    #"Se expandió NewColumn2" = Table.ExpandTableColumn(#"Consultas combinadas2", "NewColumn", {"NAF", "Periodo", "Días desde", "Días hasta"}, {"NAF.1", "Periodo.1", "Días desde.1", "Días hasta.1"}),
+    #"Personalizada agregada3" = Table.AddColumn(#"Se expandió NewColumn2", "Día anterior?", each if [NAF]=[NAF.1] and [Periodo]=[Periodo.1] and [Días desde]<=[Días hasta.1] then 0 else null),
+    #"Errores reemplazados" = Table.ReplaceErrorValues(#"Personalizada agregada3", {{"Día anterior?", null}}),
+    #"Personalizada agregada5" = Table.AddColumn(#"Errores reemplazados", "Días desde v", each if [#"Día anterior?"]=null then [Días desde] else [Días hasta.1]+1),
+    #"Año insertado" = Table.AddColumn(#"Personalizada agregada5", "Year", each Date.Year([Periodo]), type number),
+    #"Columnas quitadas2" = Table.RemoveColumns(#"Año insertado",{"Días desde"}),
+    #"Columnas con nombre cambiado3" = Table.RenameColumns(#"Columnas quitadas2",{{"Días desde v", "Días desde"}}),
+    #"Mes insertado" = Table.AddColumn(#"Columnas con nombre cambiado3", "Month", each Date.Month([Periodo]), type number),
+#"Días insertados en mes" = Table.AddColumn(#"Mes insertado", "DaysInMonth", each Date.DaysInMonth([Periodo]), type number),
+#"Resta insertada" = Table.AddColumn(#"Días insertados en mes", "Subtract", each [#"Días hasta"] - [#"Días desde"], Int64.Type),
+
+#"Personalizada agregada7" = Table.AddColumn(#"Resta insertada", "Personalizado", each if [Días hasta] = null then null else if [Días desde] <= [Días hasta] then [Días desde] else [Días hasta] ),
+    #"Columnas quitadas3" = Table.RemoveColumns(#"Personalizada agregada7",{"Días desde"}),
+    #"Columnas con nombre cambiado1" = Table.RenameColumns(#"Columnas quitadas3",{{"Personalizado", "Días desde"}}),
+    #"Personalizada agregada10" = Table.AddColumn( #"Columnas con nombre cambiado1" , "Días de Tjo", each if [#"Días desde"]=null then null else ([Subtract]+1)),
+#"Personalizada agregada1" = Table.AddColumn(#"Personalizada agregada10", "Días de Tbjo%CTP", each if[CTP]=null then[Días de Tjo] else ([Días de Tjo]*[CTP]/1000)),
+    #"Personalizada agregada6" = Table.AddColumn(#"Personalizada agregada1", "%D alta/mes", each [#"Días de Tbjo%CTP"]/[DaysInMonth]),
+#"Tipo cambiado2" = Table.TransformColumnTypes(#"Personalizada agregada6",{{"Días de Tbjo%CTP", type number}, {"Días de Tjo", Int64.Type}, {"Subtract", Int64.Type}, {"DaysInMonth", Int64.Type}, {"Month", Int64.Type}, {"Year", Int64.Type}, {"Días desde", Int64.Type}, {"Día anterior?", Int64.Type}, {"Días hasta.1", Int64.Type}, {"Días desde.1", Int64.Type}, {"Periodo.1", type date}, {"NAF.1", type text}, {"Índice02", Int64.Type}, {"Índice", Int64.Type}, {"HER", type number}, {"HEFM", type number}, {"AT EP", type number}, {"C_COM", type number}, {"Total Días", Int64.Type}, {"Días hasta", Int64.Type}, {"NAF", type text}, {"Número Identificativo", type text}, {"Trabajador", type text}, {"CTO", type text}, {"GR", type text}, {"EPI / CNAE", type text}, {"Ocupación", type text}, {"Periodo", type date}, {"%D alta/mes", Percentage.Type}}),
+    #"Columnas quitadas1" = Table.RemoveColumns(#"Tipo cambiado2",{"Índice", "Índice02", "NAF.1", "Periodo.1", "Días desde.1", "Días hasta.1", "Día anterior?", "DaysInMonth", "Subtract"}),
+    #"Columnas reordenadas3" = Table.ReorderColumns(#"Columnas quitadas1",{"NAF", "Número Identificativo", "Trabajador", "CTO", "CTP", "GR", "EPI / CNAE", "Ocupación", "Periodo", "Días desde", "Días hasta", "Total Días", "C_COM", "AT EP", "HEFM", "HER", "Year", "Month", "Días de Tjo", "Días de Tbjo%CTP"})
+    
+in
+    #"Columnas reordenadas3"

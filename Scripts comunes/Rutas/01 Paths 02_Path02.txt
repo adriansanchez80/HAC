@@ -1,0 +1,8 @@
+﻿let
+Origen = Folder.Files(#"Paths"{0}[Ubicación]),
+#"Personalizada agregada" = Table.AddColumn(Origen, "Custom", each Excel.Workbook([Content])),
+    #"Filas filtradas3" = Table.SelectRows(#"Personalizada agregada", each ([Extension] = ".xlsx")),
+#"Se expandió Custom" = Table.ExpandTableColumn(#"Filas filtradas3", "Custom", {"Item", "Kind"}, {"Item", "Kind"}),
+#"Filas filtradas" = Table.SelectRows(#"Se expandió Custom", each ([Kind] = "Sheet") and ([Extension] = ".xlsx"))
+
+in #"Filas filtradas" 

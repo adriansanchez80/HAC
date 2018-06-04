@@ -1,0 +1,35 @@
+﻿// CTO
+//Load M code from text file
+let
+Origen = Folder.Files(#"Paths"{1}[Ubicación]),
+#"Personalizada agregada4" = Table.AddColumn(Origen, "Custom", each Excel.Workbook([Content])),
+#"Se expandió Custom" = Table.ExpandTableColumn(#"Personalizada agregada4", "Custom", {"Data", "Item", "Kind"}, {"Data", "Item", "Kind"}),
+    #"Filas filtradas2" = Table.SelectRows(#"Se expandió Custom", each ([Kind] = "Sheet") and ([Item] = "Sheet0") and ([Extension] = ".xlsx")),
+#"Se expandió Data" = Table.ExpandTableColumn(#"Filas filtradas2", "Data", {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}, {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}),
+#"Filas superiores quitadas" = Table.Skip(#"Se expandió Data",3),
+    #"Otras columnas quitadas1" = Table.SelectColumns(#"Filas superiores quitadas",{"Column5"}),
+#"Encabezados promovidos" = Table.PromoteHeaders(#"Otras columnas quitadas1"),
+#"Duplicados quitados" = Table.Distinct(#"Encabezados promovidos"),
+#"Filas ordenadas" = Table.Sort(#"Duplicados quitados",{{"CTO", Order.Ascending}}),
+#"Tipo cambiado" = Table.TransformColumnTypes(#"Filas ordenadas",{{"CTO", type text}}),
+    #"Filas filtradas1" = Table.SelectRows(#"Tipo cambiado", each [CTO] <> null and [CTO] <> ""),
+
+OrigenCTO = Folder.Files("D:\Modelos de Scripts y HAC\CTOs"),
+#"Personalizada agregada4CTO" = Table.AddColumn(OrigenCTO, "Custom", each Excel.Workbook([Content])),
+#"Se expandió CustomCTO" = Table.ExpandTableColumn(#"Personalizada agregada4CTO", "Custom", {"Data", "Item", "Kind"}, {"Data", "Item", "Kind"}),
+    #"Filas filtradas2CTO" = Table.SelectRows(#"Se expandió CustomCTO", each ([Kind] = "Sheet") and ([Item] = "CTOs") and ([Extension] = ".xlsx")),
+#"Se expandió DataCTO" = Table.ExpandTableColumn(#"Filas filtradas2CTO", "Data", {"Column1", "Column2", "Column3", "Column4", "Column5"}, {"Column1", "Column2", "Column3", "Column4", "Column5"}),
+    #"Otras columnas quitadasCTO" = Table.SelectColumns(#"Se expandió DataCTO",{"Column1", "Column2", "Column3", "Column4", "Column5"}),
+#"Encabezados promovidosCTO" = Table.PromoteHeaders(#"Otras columnas quitadasCTO"),
+#"Duplicados quitados1CTO" = Table.Distinct(#"Encabezados promovidosCTO", {"CTO"}),
+  #"Tipo cambiadoCTO" = Table.TransformColumnTypes(#"Duplicados quitados1CTO" ,{{"CTO", type text}, {"Duración", type text}, {"Jornada", type text}, {"Denominación", type text}, {"Peculiaridad", type text}}),
+    #"Texto en minúsculasCTO" = Table.TransformColumns(#"Tipo cambiadoCTO",{{"Duración", Text.Lower}, {"Jornada", Text.Lower}, {"Denominación", Text.Lower}, {"Peculiaridad", Text.Lower}}),
+    #"Texto en mayúsculasCTO" = Table.TransformColumns(#"Texto en minúsculasCTO",{{"Duración", Text.Upper}, {"Jornada", Text.Upper}, {"Denominación", Text.Upper}, {"Peculiaridad", Text.Upper}}),
+    #"Poner En Mayúsculas Cada PalabraCTO" = Table.TransformColumns(#"Texto en mayúsculasCTO",{{"Duración", Text.Proper}, {"Jornada", Text.Proper}, {"Denominación", Text.Proper}, {"Peculiaridad", Text.Proper}}),
+    #"Texto recortadoCTO" = Table.TransformColumns(#"Poner En Mayúsculas Cada PalabraCTO",{},Text.Trim),
+    #"Texto limpioCTO" = Table.TransformColumns(#"Texto recortadoCTO",{},Text.Clean),
+    #"Filas filtradasCTO" = Table.SelectRows(#"Texto limpioCTO", each [CTO] <> null and [CTO] <> ""),
+    #"Consultas combinadas" = Table.NestedJoin(#"Filas filtradas1",{"CTO"},#"Filas filtradasCTO",{"CTO"},"NewColumn",JoinKind.LeftOuter),
+    #"Se expandió NewColumn" = Table.ExpandTableColumn(#"Consultas combinadas", "NewColumn", {"Duración", "Jornada", "Denominación", "Peculiaridad"}, {"Duración", "Jornada", "Denominación", "Peculiaridad"})
+in
+    #"Se expandió NewColumn"

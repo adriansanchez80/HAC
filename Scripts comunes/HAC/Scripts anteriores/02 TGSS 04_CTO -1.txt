@@ -1,0 +1,16 @@
+﻿// CTO
+let
+Origen = Folder.Files(#"Paths"{1}[Ubicación]),
+#"Personalizada agregada4" = Table.AddColumn(Origen, "Custom", each Excel.Workbook([Content])),
+#"Se expandió Custom" = Table.ExpandTableColumn(#"Personalizada agregada4", "Custom", {"Data", "Item", "Kind"}, {"Data", "Item", "Kind"}),
+    #"Filas filtradas2" = Table.SelectRows(#"Se expandió Custom", each ([Kind] = "Sheet") and ([Item] = "Sheet0") and ([Extension] = ".xlsx")),
+#"Se expandió Data" = Table.ExpandTableColumn(#"Filas filtradas2", "Data", {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}, {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}),
+#"Filas superiores quitadas" = Table.Skip(#"Se expandió Data",3),
+    #"Otras columnas quitadas1" = Table.SelectColumns(#"Filas superiores quitadas",{"Column5"}),
+#"Encabezados promovidos" = Table.PromoteHeaders(#"Otras columnas quitadas1"),
+#"Duplicados quitados" = Table.Distinct(#"Encabezados promovidos"),
+#"Filas ordenadas" = Table.Sort(#"Duplicados quitados",{{"CTO", Order.Ascending}}),
+#"Tipo cambiado" = Table.TransformColumnTypes(#"Filas ordenadas",{{"CTO", type text}}),
+    #"Filas filtradas1" = Table.SelectRows(#"Tipo cambiado", each [CTO] <> null and [CTO] <> "")
+in
+#"Filas filtradas1"

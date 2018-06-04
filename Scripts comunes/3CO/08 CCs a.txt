@@ -1,0 +1,18 @@
+let
+    Origen = #"CCs 00",
+    #"Duplicados quitados" = Table.Distinct(Origen, {"Combinada"}),
+    #"Filas filtradas" = Table.SelectRows(#"Duplicados quitados", each [Combinada] <> null and [Combinada] <> ""),
+    #"Columnas con nombre cambiado" = Table.RenameColumns(#"Filas filtradas",{{"Convenio", "Sector"}, {"Folder Path.1.1.2", "Ámbito"}, {"Folder Path.1.2", "Subámbito"}}),
+    #"Otras columnas quitadas" = Table.SelectColumns(#"Columnas con nombre cambiado",{"Sector", "Ámbito", "Subámbito", "Folder Path.2.2.2.2", "Combinada"}),
+    #"Columnas reordenadas" = Table.ReorderColumns(#"Otras columnas quitadas",{"Ámbito", "Subámbito", "Sector", "Combinada"}),
+    #"Primeros caracteres insertados" = Table.AddColumn(#"Columnas reordenadas", "A..Z CCs", each Text.Start([Sector], 1), type text),
+    #"Primeros caracteres insertados2" = Table.AddColumn(#"Primeros caracteres insertados", "A..ZZ Subámbito", each Text.Start([Subámbito], 1), type text),
+    #"Columnas con nombre cambiado2" = Table.RenameColumns(#"Primeros caracteres insertados2",{{"Sector", "Convenio"}, {"Folder Path.2.2.2.2", "Sector"}}),
+    #"Filas filtradas1" = Table.SelectRows(#"Columnas con nombre cambiado2", each ([Convenio] <> "Modelo Cc")),
+    #"Valor reemplazado1" = Table.ReplaceValue(#"Filas filtradas1"," ",null,Replacer.ReplaceValue,{"Sector"}),
+    #"Valor reemplazado2" = Table.ReplaceValue(#"Valor reemplazado1","","",Replacer.ReplaceValue,{"Sector"}),
+    #"Personalizada agregada1" = Table.AddColumn(#"Valor reemplazado2", "Subámbito2", each if [Sector]<>"" then [Subámbito] else null),
+    #"Columnas quitadas" = Table.RemoveColumns(#"Personalizada agregada1",{"Subámbito"}),
+    #"Columnas con nombre cambiado3" = Table.RenameColumns(#"Columnas quitadas",{{"Subámbito2", "Subámbito"}})
+in
+    #"Columnas con nombre cambiado3"

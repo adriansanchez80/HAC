@@ -1,0 +1,12 @@
+﻿// Tipos conceptos
+let
+    Origen = #table({"Tipo Concepto", "Se devenga en función de:"},{{"Días nat. de alta y CTP","Días nat. alta y CTP:W base, plus convenio, etc en cómputo **mensual"},{"D. nat. de alta sin CTP","No afecta el CTP: Plus vestuario en cómputo **mensual"},
+{"**Días nat. de alta y CTP","Días de alta y CTP:W base, plus convenio, etc en cómputo **diario"},{"**D. nat. de alta sin CTP","No afecta el CTP: Plus vestuario"}, {"D. Hábiles y CTP","no se...."}, {"D. Hábiles sin CTP","Plus comedor o plus transporte"}, {"Conceptos devengo>mes y CTP","Pagas extras, paga Bº"},{"Conceptos devengo>mes sin CTP","no se...."}  ,{"Antigüedad y CTP","Años de antigüedad"}, {"Días/Q determinados","HHEE, HN"}, {"Meses trabajo y CTP","Si estás de vacaciones no se percibe, zb plus quebranto de moneda o plus productividad"}, {"Meses trabajo sin CTP","Si estás de vacaciones no se percibe, Plus vestuario"}}),
+   	
+//¿puede existir un plus que te den entero aunque no estés de alta todo el mes? 
+// si el CC me da el W anual, tratar como concepto de devengo > mes
+	#"Added Index" = Table.AddIndexColumn(Origen, "Índice", 0, 1),
+    #"Changed Type" = Table.TransformColumnTypes(#"Added Index",{{"Índice", Int64.Type}, {"Tipo Concepto", type text}, {"Se devenga en función de:", type text}}),
+    #"Reordered Columns" = Table.ReorderColumns(#"Changed Type",{"Índice", "Tipo Concepto", "Se devenga en función de:"})
+in
+    #"Reordered Columns"

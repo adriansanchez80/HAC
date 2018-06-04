@@ -1,0 +1,29 @@
+﻿let
+
+Origen = Folder.Files(#"Paths"{3}[Ubicación]),
+    #"Personalizada agregada4" = Table.AddColumn(Origen, "Custom", each Excel.Workbook([Content])),
+#"Se expandió Custom" = Table.ExpandTableColumn(#"Personalizada agregada4", "Custom", {"Data", "Item", "Kind"}, {"Data", "Item", "Kind"}),
+    #"Filas filtradas2" = Table.SelectRows(#"Se expandió Custom", each ([Kind] = "Sheet") and ([Item] = "Sheet0") and ([Extension] = ".xlsx")),
+#"Se expandió Data" = Table.ExpandTableColumn(#"Filas filtradas2", "Data", {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}, {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}),
+#"Filas superiores quitadas" = Table.Skip(#"Se expandió Data",3),
+#"Otras columnas quitadas" = Table.SelectColumns(#"Filas superiores quitadas",{"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14"}),
+#"Columnas reordenadas" = Table.ReorderColumns(#"Otras columnas quitadas",{"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14"}),
+#"Encabezados promovidos" = Table.PromoteHeaders(#"Columnas reordenadas"),
+    #"Tipo cambiado" = Table.TransformColumnTypes(#"Encabezados promovidos",{{"NAF", type text}, {"Número Identificativo", type text}, {"Trabajador", type text}, {"CTO", type text}, {"CTP", type text}, {"GR", type text}, {"EPI / CNAE", type text}, {"Ocupación", type text}, {"Periodo", type date}, {"Total Días", Int64.Type}, {"C_COM", Currency.Type}, {"AT EP", Currency.Type}, {"HEFM", Currency.Type}, {"HER", Currency.Type}}),
+#"Filas filtradas" = Table.SelectRows(#"Tipo cambiado", each ([NAF] <> null)),
+#"Consultas combinadas" = Table.NestedJoin(#"Filas filtradas",{"NAF"},AFILIACION,{"NAF"},"NewColumn",JoinKind.LeftOuter),
+    #"Se expandió NewColumn" = Table.ExpandTableColumn(#"Consultas combinadas", "NewColumn", {"GR"}, {"GR.1"}),
+    #"Valor reemplazado" = Table.ReplaceValue(#"Se expandió NewColumn","",null,Replacer.ReplaceValue,{"GR"}),
+    #"Personalizada agregada" = Table.AddColumn(#"Valor reemplazado", "Custom", each if [GR]<>null then [GR] else [GR.1]),
+    #"Columnas quitadas" = Table.RemoveColumns(#"Personalizada agregada",{"GR", "GR.1"}),
+    #"Columnas reordenadas1" = Table.ReorderColumns(#"Columnas quitadas",{"NAF", "Número Identificativo", "Trabajador", "CTO", "CTP", "Custom", "EPI / CNAE", "Ocupación", "Periodo",  "Total Días", "C_COM", "AT EP", "HEFM", "HER"}),
+    #"Columnas con nombre cambiado" = Table.RenameColumns(#"Columnas reordenadas1",{{"Custom", "GR"}}),
+    #"Tipo cambiado1" = Table.TransformColumnTypes(#"Columnas con nombre cambiado",{{"GR", type text},{"CTP", Int64.Type}}),
+
+    #"Días insertados en mes" = Table.AddColumn(#"Tipo cambiado1", "DaysInMonth", each Date.DaysInMonth([Periodo]), type number),
+#"Personalizada agregada1" = Table.AddColumn(#"Días insertados en mes", "Días de Tbjo%CTP", each if[CTP]=null then[Total Días] else ([Total Días]*[CTP]/1000)),
+#"Tipo cambiado2" = Table.TransformColumnTypes(#"Personalizada agregada1",{{"Días de Tbjo%CTP", type number}, {"DaysInMonth", Int64.Type}, {"HER", Currency.Type}, {"HEFM", Currency.Type}, {"AT EP", Currency.Type}, {"C_COM", Currency.Type}, {"Total Días", Int64.Type}, {"NAF", type text}, {"Número Identificativo", type text}, {"Trabajador", type text}, {"CTO", type text}, {"GR", type text}, {"EPI / CNAE", type text}, {"Ocupación", type text}, {"Periodo", type date}}),
+    #"Columnas reordenadas3" = Table.ReorderColumns(#"Tipo cambiado2",{"NAF", "Número Identificativo", "Trabajador", "CTO", "CTP", "GR", "EPI / CNAE", "Ocupación", "Periodo", "Total Días", "C_COM", "AT EP", "HEFM", "HER", "Días de Tbjo%CTP"}),
+    #"Filas filtradas1" = Table.SelectRows(#"Columnas reordenadas3", each ([NAF] <> null and [NAF] <> "") and ([C_COM] <> null and [C_COM] <> "" and [C_COM] <> 0))
+in
+    #"Filas filtradas1"

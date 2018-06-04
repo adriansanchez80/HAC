@@ -1,0 +1,6 @@
+﻿// Paths
+let
+Origen = Excel.CurrentWorkbook(){[Name="Paths"]}[Content],
+#"Tipo cambiado" = Table.TransformColumnTypes(Origen,{{"Tipo de contenido", type text}, {"Ubicación", type text}})
+in
+#"Tipo cambiado"

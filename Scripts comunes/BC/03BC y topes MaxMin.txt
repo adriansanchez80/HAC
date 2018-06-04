@@ -1,0 +1,21 @@
+﻿// BCMaxMin
+let
+
+Origen = Folder.Files(#"Paths"{5}[Ubicación]),
+    #"Personalizada agregada2" = Table.AddColumn(Origen, "Custom", each Excel.Workbook([Content])),
+    #"Se expandió Custom" = Table.ExpandTableColumn(#"Personalizada agregada2", "Custom", {"Data", "Item", "Kind"}, {"Data", "Item", "Kind"}),
+    #"Se expandió Data" = Table.ExpandTableColumn(#"Se expandió Custom", "Data", {"Column1", "Column2", "Column3", "Column4"}, {"Column1", "Column2", "Column3", "Column4"}),
+    #"Filas filtradas1" = Table.SelectRows(#"Se expandió Data", each ([Column1] <> "GRUPO") and ([Column2] <> null) and ([Name] = "Bases anuales.xlsx") and ([Extension] = ".xlsx") and ([Kind] = "Sheet")),
+    #"Columnas con nombre cambiado" = Table.RenameColumns(#"Filas filtradas1",{{"Column1", "Grupo"}, {"Column2", "CATPRO"}, {"Column3", "BMIN"}, {"Column4", "BMAX"}}),
+    #"Columnas quitadas" = Table.RemoveColumns(#"Columnas con nombre cambiado",{"Content", "Name", "Extension", "Date accessed", "Date modified", "Date created", "Attributes", "Folder Path", "Kind"}),
+    #"Personalizada agregada" = Table.AddColumn(#"Columnas quitadas", "BCMIN ok", each if [Grupo]<8 then [BMIN] else [BMIN]*30),
+    #"Personalizada agregada1" = Table.AddColumn(#"Personalizada agregada", "BCMAX ok", each if [Grupo]<8 then [BMAX] else [BMAX]*30),
+    #"Tipo cambiado1" = Table.TransformColumnTypes(#"Personalizada agregada1",{{"Item", Int64.Type}, {"Grupo", type text}, {"BMIN", type number}, {"BMAX", type number}, {"CATPRO", type text}, {"BCMIN ok", type number}, {"BCMAX ok", type number}}),
+    #"Otras columnas con anulación de dinamización" = Table.UnpivotOtherColumns(#"Tipo cambiado1", {"Item", "Grupo", "CATPRO"}, "Atributo", "Valor"),
+    #"Filas filtradas2" = Table.SelectRows(#"Otras columnas con anulación de dinamización", each ([Atributo] = "BCMAX ok" or [Atributo] = "BCMIN ok")),
+    #"Columnas con nombre cambiado1" = Table.RenameColumns(#"Filas filtradas2",{{"Item", "Año"}}),
+    #"Columnas reordenadas" = Table.ReorderColumns(#"Columnas con nombre cambiado1",{"Año", "Grupo", "CATPRO", "Atributo", "Valor"}),
+    #"Columna duplicada" = Table.DuplicateColumn(#"Columnas reordenadas", "Grupo", "Grupo nº"),
+    #"Tipo cambiado" = Table.TransformColumnTypes(#"Columna duplicada",{{"Grupo nº", Int64.Type}})
+in
+    #"Tipo cambiado"

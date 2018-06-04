@@ -1,0 +1,19 @@
+﻿// AFILIACION
+let
+
+Origen = Folder.Files(#"Paths"{2}[Ubicación]),
+    #"Filas filtradas" = Table.SelectRows(Origen, each ([Extension] = ".xlsx")),
+#"Personalizada agregada4" = Table.AddColumn(#"Filas filtradas", "Custom", each Excel.Workbook([Content])),
+#"Se expandió Custom" = Table.ExpandTableColumn(#"Personalizada agregada4", "Custom", {"Data", "Item", "Kind"}, {"Data", "Item", "Kind"}),
+    #"Filas filtradas2" = Table.SelectRows(#"Se expandió Custom", each ([Kind] = "Sheet") and ([Item] = "Sheet0")),
+    #"Se expandió Data" = Table.ExpandTableColumn(#"Filas filtradas2", "Data", {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}, {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}),
+    #"Filas superiores quitadas" = Table.Skip(#"Se expandió Data",3),
+    #"Encabezados promovidos" = Table.PromoteHeaders(#"Filas superiores quitadas"),
+    #"Tipo cambiado" = Table.TransformColumnTypes(#"Encabezados promovidos",{{"GR", Int64.Type}}),
+    #"Otras columnas quitadas1" = Table.SelectColumns(#"Tipo cambiado",{"GR", "NAF", "Trabajador"}),
+    #"Filas agrupadas" = Table.Group(#"Otras columnas quitadas1", {"Trabajador", "NAF"}, {{"Recuento", each List.Max([GR]), type number}}),
+    #"Columnas con nombre cambiado" = Table.RenameColumns(#"Filas agrupadas",{{"Recuento", "GR"}}),
+    #"Tipo cambiado1" = Table.TransformColumnTypes(#"Columnas con nombre cambiado",{{"GR", type text}, {"Trabajador", type text}, {"NAF", type text}}),
+    #"Filas filtradas1" = Table.SelectRows(#"Tipo cambiado1", each [NAF] <> null and [NAF] <> "")
+in
+    #"Filas filtradas1"
